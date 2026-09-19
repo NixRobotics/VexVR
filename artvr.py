@@ -81,7 +81,7 @@ def main():
     object_points = 32
     object_size = 6
     object_center = (100, 100)
-    for i in range(elephant_points + 1):
+    for i in range(object_points + 1):
         # x, y = point_on_circle(200, 16, i)
         x, y = point_on_elephant(object_size, object_points, i)
         new_x = x + object_center[0]

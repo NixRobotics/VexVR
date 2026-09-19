@@ -38,8 +38,9 @@ brain.clear()
 
 # X/Y circle, parameter based
 def point_on_circle(radius, number_of_segments, n):
-    x = radius * cos(radians(n * 360 / number_of_segments))
-    y = radius * sin(radians(n * 360 / number_of_segments))
+    t = radians(n * 360 / number_of_segments)
+    x = radius * cos(t)
+    y = radius * sin(t)
     brain.print("xy = ", x, y)
     brain.new_line()
     return (x, y)

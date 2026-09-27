@@ -69,24 +69,26 @@ def draw_tree(sz, level):
 def draw_tree2(branch_length):
     # Base case: stop recursion if the branch is too short
     pen.set_pen_width(EXTRA_THIN)
-    if branch_length < 10:
+    if branch_length < 50:
         return
     
     # 1. Draw the main branch
+    pen.move(DOWN)
     pen.set_pen_color_rgb(branch_length * 500 % 255, (branch_length + 90) * 500 % 255, (branch_length + 180) * 500 % 255, 100)
     drivetrain.drive_for(FORWARD, branch_length, MM)
     
     # 2. Right subtree
     drivetrain.turn_for(RIGHT, 25, DEGREES)  # Turn right by 25 degrees
-    draw_tree2(branch_length - 15)  # Draw a shorter subtree
+    draw_tree2(branch_length - 25)  # Draw a shorter subtree
     
     # 3. Left subtree 
     # (Turn left 50 degrees to counteract the previous 25-degree right turn)
     drivetrain.turn_for(LEFT, 50, DEGREES)  # Turn right by 25 degrees
-    draw_tree2(branch_length - 15)  # Draw a shorter subtree
+    draw_tree2(branch_length - 25)  # Draw a shorter subtree
     
     # 4. Return to the starting position and orientation
     drivetrain.turn_for(RIGHT, 25, DEGREES)  # Turn right by 25 degrees
+    pen.move(UP)
     drivetrain.drive_for(REVERSE, branch_length, MM)  # Backtrack down the branch
 
 # Add project code in "main"

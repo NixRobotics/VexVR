@@ -1,0 +1,108 @@
+#region VEXcode Generated Robot Configuration
+import math
+import random
+from vexcode_vr import *
+
+# Brain should be defined by default
+brain=Brain()
+
+drivetrain = Drivetrain("drivetrain", 0)
+pen = Pen("pen", 8)
+pen.set_pen_width(THIN)
+left_bumper = Bumper("leftBumper", 2)
+right_bumper = Bumper("rightBumper", 3)
+front_eye = EyeSensor("frontEye", 4)
+down_eye = EyeSensor("downEye", 5)
+front_distance = Distance("frontdistance", 6)
+distance = front_distance
+magnet = Electromagnet("magnet", 7)
+location = Location("location", 9)
+
+#endregion VEXcode Generated Robot Configuration
+# ------------------------------------------
+# 
+# 	Project:      VEXcode Project
+#	Author:       VEX
+#	Created:
+#	Description:  VEXcode VR Python Project
+# 
+# ------------------------------------------
+
+# from math import pi
+
+def point_on_circle(radius, number_of_steps):
+    # simple tangent following
+    direction = 360 / number_of_steps
+    distance = 2 * math.pi * radius / number_of_steps
+    return (direction, distance)
+
+def draw_circle(radius, number_of_steps):
+    for i in range(number_of_steps):
+        turn, distance = point_on_circle(radius, number_of_steps)
+        drivetrain.turn_for(RIGHT, turn, DEGREES)
+        drivetrain.drive_for(FORWARD, distance, MM)
+
+def draw_spiral(radius, number_of_steps, number_of_loops, change):
+    for i in range(number_of_steps * number_of_loops):
+        turn, distance = point_on_circle(radius - change*i, number_of_steps)
+        drivetrain.turn_for(RIGHT, turn, DEGREES)
+        drivetrain.drive_for(FORWARD, distance, MM)
+
+def point_on_star(turn, distance):
+    return (turn, distance)
+
+# Setup
+angle = 30  # Split angle
+tree_size = 200
+tree_depth = 4
+
+def draw_tree(sz, level):
+    if level > 0:
+        drivetrain.drive_for(FORWARD, sz, MM)
+        drivetrain.turn_for(RIGHT, angle, DEGREES)
+        draw_tree(0.8 * sz, level - 1)  # Right branch
+        drivetrain.turn_for(LEFT, angle, DEGREES)
+        draw_tree(0.8 * sz, level - 1)  # Left branch
+        drivetrain.turn_for(RIGHT, angle, DEGREES)
+        drivetrain.drive_for(REVERSE, sz, MM)
+
+def draw_tree2(branch_length):
+    # Base case: stop recursion if the branch is too short
+    pen.set_pen_width(EXTRA_THIN)
+    if branch_length < 10:
+        return
+    
+    # 1. Draw the main branch
+    pen.set_pen_color_rgb(branch_length * 500 % 255, (branch_length + 90) * 500 % 255, (branch_length + 180) * 500 % 255, 100)
+    drivetrain.drive_for(FORWARD, branch_length, MM)
+    
+    # 2. Right subtree
+    drivetrain.turn_for(RIGHT, 25, DEGREES)  # Turn right by 25 degrees
+    draw_tree2(branch_length - 15)  # Draw a shorter subtree
+    
+    # 3. Left subtree 
+    # (Turn left 50 degrees to counteract the previous 25-degree right turn)
+    drivetrain.turn_for(LEFT, 50, DEGREES)  # Turn right by 25 degrees
+    draw_tree2(branch_length - 15)  # Draw a shorter subtree
+    
+    # 4. Return to the starting position and orientation
+    drivetrain.turn_for(RIGHT, 25, DEGREES)  # Turn right by 25 degrees
+    drivetrain.drive_for(REVERSE, branch_length, MM)  # Backtrack down the branch
+
+# Add project code in "main"
+def main():
+    pen.move(DOWN)
+    drivetrain.set_drive_velocity(100, PERCENT)
+    drivetrain.set_turn_velocity(100, PERCENT)
+
+    # draw_tree(tree_size, tree_depth)
+    draw_tree2(tree_size)
+
+    # draw_spiral(400, 40, 10, 2)
+
+    for i in range(8):
+        draw_circle(400, 40)
+        drivetrain.turn_for(RIGHT, 45, DEGREES)
+
+# VR threads — Do not delete
+vr_thread(main)

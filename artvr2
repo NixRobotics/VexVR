@@ -28,7 +28,40 @@ location = Location("location", 9)
 # 
 # ------------------------------------------
 
-# from math import pi
+# X/Y elephant, parameter based
+def point_on_elephant(radius, number_of_segments, n):
+    t = math.radians(n * 360 / number_of_segments)
+    y = radius * (- 60 * math.cos(t) + 30 * math.sin(t) - 8 * math.sin(2 * t) + 10 * math.sin(3 * t))
+    x = radius * (50 * math.sin(t) + 18 * math.sin(2 * t) - 12 * math.cos(3 * t) + 14 * math.cos(5 * t))
+    return (x, y)
+
+# heading and distance to new X/Y from old X/Y
+def directions_to_point(x1, y1, x2, y2):
+    distance = math.sqrt((x2 - x1) ** 2 + ((y2 - y1) ** 2))
+    heading = math.degrees(math.atan2(y2 - y1, x2 - x1))
+    brain.print("dist, dir = ", distance, heading)
+    brain.new_line()
+    return (heading, distance)
+
+def draw_elephant(radius, number_of_segments):
+    # draw elephant or circle using X/Y method
+    # need to keep track of previous X/Y
+    pen.move(DOWN)
+    pen.set_pen_color(RED)
+    pen.set_pen_width(THIN)
+    object_points = number_of_segments
+    object_size = radius
+    for i in range(object_points + 1):
+        # x, y = point_on_circle(200, 16, i)
+        x, y = point_on_elephant(object_size, object_points, i)
+        new_x = x
+        new_y = y
+        if (i > 0):
+            heading, distance = directions_to_point(old_x, old_y, new_x, new_y)
+            drivetrain.turn_to_heading(heading, DEGREES)
+            drivetrain.drive_for(FORWARD, distance, MM)
+        old_x = new_x
+        old_y = new_y
 
 def point_on_circle(radius, number_of_steps):
     # simple tangent following
@@ -43,6 +76,8 @@ def draw_circle(radius, number_of_steps):
         drivetrain.drive_for(FORWARD, distance, MM)
 
 def draw_spiral(radius, number_of_steps, number_of_loops, change):
+    pen.move(DOWN)
+    pen.set_pen_width(THIN)
     for i in range(number_of_steps * number_of_loops):
         turn, distance = point_on_circle(radius - change*i, number_of_steps)
         drivetrain.turn_for(RIGHT, turn, DEGREES)
@@ -52,59 +87,78 @@ def point_on_star(turn, distance):
     return (turn, distance)
 
 # Setup
-angle = 30  # Split angle
-tree_size = 200
-tree_depth = 4
+tree_angle = 35
+tree_size = 325
+tree_depth = 7
+tree_change = 0.70
 
-def draw_tree(sz, level):
-    if level > 0:
-        drivetrain.drive_for(FORWARD, sz, MM)
-        drivetrain.turn_for(RIGHT, angle, DEGREES)
-        draw_tree(0.8 * sz, level - 1)  # Right branch
-        drivetrain.turn_for(LEFT, angle, DEGREES)
-        draw_tree(0.8 * sz, level - 1)  # Left branch
-        drivetrain.turn_for(RIGHT, angle, DEGREES)
-        drivetrain.drive_for(REVERSE, sz, MM)
-
-def draw_tree2(branch_length):
-    # Base case: stop recursion if the branch is too short
-    pen.set_pen_width(EXTRA_THIN)
-    if branch_length < 50:
-        return
-    
-    # 1. Draw the main branch
+def draw_tree(length, angle, change, level):
     pen.move(DOWN)
-    pen.set_pen_color_rgb(branch_length * 500 % 255, (branch_length + 90) * 500 % 255, (branch_length + 180) * 500 % 255, 100)
-    drivetrain.drive_for(FORWARD, branch_length, MM)
-    
-    # 2. Right subtree
-    drivetrain.turn_for(RIGHT, 25, DEGREES)  # Turn right by 25 degrees
-    draw_tree2(branch_length - 25)  # Draw a shorter subtree
-    
-    # 3. Left subtree 
-    # (Turn left 50 degrees to counteract the previous 25-degree right turn)
-    drivetrain.turn_for(LEFT, 50, DEGREES)  # Turn right by 25 degrees
-    draw_tree2(branch_length - 25)  # Draw a shorter subtree
-    
-    # 4. Return to the starting position and orientation
-    drivetrain.turn_for(RIGHT, 25, DEGREES)  # Turn right by 25 degrees
-    pen.move(UP)
-    drivetrain.drive_for(REVERSE, branch_length, MM)  # Backtrack down the branch
+
+    if level > 5:
+        pen.set_pen_width(WIDE)
+        pen.set_pen_color_rgb(0, 255, 0, 100)
+    elif level > 4:
+        pen.set_pen_width(MEDIUM)
+        pen.set_pen_color_rgb(255, 0, 0, 100)
+    elif level > 3:
+        pen.set_pen_width(THIN)
+        pen.set_pen_color_rgb(0, 0, 255, 100)
+    else:
+        pen.set_pen_width(EXTRA_THIN)
+        pen.set_pen_color_rgb(128, 0, 255, 100)
+
+    if level > 0:
+        # 1. Draw the main branch
+        drivetrain.drive_for(FORWARD, length, MM)
+
+        # 2. Right subtree
+        drivetrain.turn_for(RIGHT, angle, DEGREES)
+        draw_tree(change * length, angle, change, level - 1)  # Right branch
+
+        # 3. Left subtree 
+        # (Turn left 2 * angle degrees to counteract the previous angle-degree right turn)
+        drivetrain.turn_for(LEFT, 2 * angle, DEGREES)
+        draw_tree(change * length, angle, change, level - 1)  # Left branch
+
+        # 4. Return to the starting position and orientation
+        drivetrain.turn_for(RIGHT, angle, DEGREES)
+
+        # Backtrack down the branch
+        pen.move(UP)
+        drivetrain.drive_for(REVERSE, length, MM)
+        pen.move(DOWN)
+
+    # Final case: stop recursion if the branch is too short
 
 # Add project code in "main"
 def main():
-    pen.move(DOWN)
     drivetrain.set_drive_velocity(100, PERCENT)
     drivetrain.set_turn_velocity(100, PERCENT)
 
-    # draw_tree(tree_size, tree_depth)
-    draw_tree2(tree_size)
+    drivetrain.drive_for(REVERSE, 500, MM)
+    drivetrain.turn_to_heading(90, DEGREES)
+    drivetrain.drive_for(FORWARD, 200, MM)
 
-    # draw_spiral(400, 40, 10, 2)
+    draw_elephant(4, 30)
 
-    for i in range(8):
-        draw_circle(400, 40)
-        drivetrain.turn_for(RIGHT, 45, DEGREES)
+    pen.move(UP)
+    drivetrain.turn_to_heading(90, DEGREES)
+    drivetrain.drive_for(REVERSE, 200, MM)
+    drivetrain.turn_to_heading(0, DEGREES)
+
+    draw_tree(tree_size, tree_angle, tree_change, tree_depth)
+
+    pen.move(UP)
+    drivetrain.turn_to_heading(15, DEGREES)
+    drivetrain.drive_for(FORWARD, 1100, MM)
+
+    pen.set_pen_color_rgb(255, 0, 255, 50)
+    draw_spiral(300, 30, 5, 1.5)
+
+    #for i in range(8):
+    #    draw_circle(400, 40)
+    #    drivetrain.turn_for(RIGHT, 45, DEGREES)
 
 # VR threads — Do not delete
 vr_thread(main)
